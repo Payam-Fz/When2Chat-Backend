@@ -27,14 +27,14 @@ jobs:
       matrix:
         lambda: ${{ fromJson(needs.autodiscover.outputs.lambdaArray) }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::390402557609:role/cicd-lambda-deployer
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: us-west-1
-      - run: zip -j ${{ matrix.lambda }}.zip ./${{ matrix.lambda }}/lambda_function.rb
+      - run: zip -j ${{ matrix.lambda }}.zip ./src/${{ matrix.lambda }}/lambda_function.rb
       - run: aws lambda update-function-code --function-name=${{ matrix.lambda }} --zip-file=fileb://${{ matrix.lambda }}.zip
