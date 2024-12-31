@@ -11,7 +11,7 @@ jobs:
   autodiscover:
     runs-on: ubuntu-latest
     outputs:
-      lambdaArray: ${{ env.lambdas }}
+      lambdaArray: ${{ steps.getLambdas.outputs.lambdas }}
     steps:
       - uses: actions/checkout@v3
       - id: getLambdas
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        lambda: ${{ fromJson(env.lambdas) }}
+        lambda: ${{ fromJson(needs.autodiscover.outputs.lambdaArray) }}
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
