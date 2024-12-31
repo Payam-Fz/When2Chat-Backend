@@ -18,7 +18,7 @@ jobs:
         run: |
           # Discover all Lambda directories (first-level subdirectories in 'src')
           lambdas=$(tree -d -L 1 -J src | jq -j -c '.[0].contents | map(.name)')
-          echo "lambdas=${lambdas}" >> $GITHUB_ENV
+          echo "lambdas=${lambdas}" >> $GITHUB_OUTPUT
 
   deploy:
     needs: autodiscover
