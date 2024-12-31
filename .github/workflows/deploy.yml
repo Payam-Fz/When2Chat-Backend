@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - main
+permissions:
+  id-token: write   # Required for requesting the JWT from GitHub's OIDC provider
+  contents: read    # Required for actions/checkout
+
 jobs:
   autodiscover:
     runs-on: ubuntu-latest
@@ -12,7 +16,7 @@ jobs:
       - uses: actions/checkout@v3
       - id: getLambdas
         run: |
-          # Discover all Lambda directories (first-level subdirectories)
+          # Discover all Lambda directories (first-level subdirectories in 'src')
           lambdas=$(tree -d -L 1 -J src | jq -j -c '.[0].contents | map(.name)')
           echo "::set-output name=lambdas::${lambdas}"
 
@@ -21,16 +25,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        lambda: ${{fromJson(needs.autodiscover.outputs.lambdaArray)}}
+        lambda: ${{ fromJson(needs.autodiscover.outputs.lambdaArray) }}
     steps:
       - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
-      - uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::390402557609:role/cicd-lambda-deployer
           aws-region: us-west-1
-      - run: zip -j ${{matrix.lambda}}.zip ./${{matrix.lambda}}/index.rb
-      - run: aws lambda update-function-code --function-name=${{matrix.lambda}} --zip-file=fileb://${{matrix.lambda}}.zip
+      - run: zip -j ${{ matrix.lambda }}.zip ./${{ matrix.lambda }}/lambda_function.rb
+      - run: aws lambda update-function-code --function-name=${{ matrix.lambda }} --zip-file=fileb://${{ matrix.lambda }}.zip
