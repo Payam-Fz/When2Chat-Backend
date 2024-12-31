@@ -11,21 +11,21 @@ jobs:
   autodiscover:
     runs-on: ubuntu-latest
     outputs:
-      lambdaArray: ${{ steps.getLambdas.outputs.lambdas }}
+      lambdaArray: ${{ env.lambdas }}
     steps:
       - uses: actions/checkout@v3
       - id: getLambdas
         run: |
           # Discover all Lambda directories (first-level subdirectories in 'src')
           lambdas=$(tree -d -L 1 -J src | jq -j -c '.[0].contents | map(.name)')
-          echo "::set-output name=lambdas::${lambdas}"
+          echo "lambdas=${lambdas}" >> $GITHUB_ENV
 
   deploy:
     needs: autodiscover
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        lambda: ${{ fromJson(needs.autodiscover.outputs.lambdaArray) }}
+        lambda: ${{ fromJson(env.lambdas) }}
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
